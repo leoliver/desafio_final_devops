@@ -1,6 +1,6 @@
 name: Continuous Integration
 
-on: push
+on: [push, pull_request]
 
 jobs:
   continuous-integration:
@@ -12,5 +12,5 @@ jobs:
 
       - name: Build and Test Docker
         run: |
-          docker-compose up
+          docker-compose up -d
           docker-compose run api python -m unittest discover
