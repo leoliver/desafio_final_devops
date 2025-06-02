@@ -1,9 +1,13 @@
 name: Continuous Integration
 
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
 on: [push, pull_request]
 
 jobs:
-  continuous-integration:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -12,7 +16,35 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-compose-action@v1
 
-      - name: Build and Test Docker
-        run: |
-          docker compose up -d
-          docker compose run api python -m unittest discover
+      - name: Build Docker Image
+        run: docker compose up -d
+          
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Docker
+        uses: docker/setup-compose-action@v1
+
+      - name: Test Flask API
+        run: docker compose run api python -m unittest discover
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
